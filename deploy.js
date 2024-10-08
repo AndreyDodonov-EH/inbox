@@ -12,28 +12,53 @@ let provider = new HDWalletProvider({
 
 const web3 = new Web3(provider);
 
-const initialMessage = "Eternal gays!";
+const INITIAL_MESSAGE = "Eternal gays!";
+const GAS_MARGIN = 1.1;
+const MAX_PRIORITY_FEE_PER_GAS_GWEI = 1;
 
 (async () => {
     try {
         const accounts = await web3.eth.getAccounts();
-        console.log('Attempting to deploy from account', accounts[0]);
+        const accountToUse = accounts[0];
+        console.log('Attempting to deploy from account', accountToUse);
         const web3Contract = new web3.eth.Contract(contract.abi);
         // THIS IS NOT DEPLOYING THE CONTRACT, IT IS CREATING DEPLOYMENT TRANSACTION WHICH SHOULD BE SENT
         const deploymentTranscation = web3Contract
-            .deploy({data: contract.evm.bytecode.object, arguments: [initialMessage]});
-        const inbox = await deploymentTranscation.send({from: accounts[0],  gas: '1000000',
-                maxFeePerGas: web3.utils.toWei('5', 'gwei'),
-                maxPriorityFeePerGas: web3.utils.toWei('3.5', 'gwei') 
+            .deploy({data: contract.evm.bytecode.object, arguments: [INITIAL_MESSAGE]});
+
+        const estimatedGas = Number(await deploymentTranscation.estimateGas({from: accountToUse}));
+        console.log('Estimated gas:', estimatedGas);
+
+        const balance = await web3.eth.getBalance(accountToUse);
+        console.log("Balance in Wei:", balance);
+        console.log("Balance in Ether:", web3.utils.fromWei(balance, 'ether'));
+
+        const gasPrice = await web3.eth.getGasPrice();
+        console.log("Current Gas Price in Wei:", gasPrice);
+        const gasPriceGwei = Number(web3.utils.fromWei(gasPrice, 'gwei'));
+        console.log("Current Gas Price in Gwei:", gasPriceGwei);
+
+        const estimated_cost_gwei = (gasPriceGwei + MAX_PRIORITY_FEE_PER_GAS_GWEI) * estimatedGas * GAS_MARGIN;
+        console.log('Estimated cost gwei:', estimated_cost_gwei);
+        const estimated_cost_eth = web3.utils.fromWei((estimated_cost_gwei*1e9).toString(), 'ether');
+        console.log('Estimated cost ether:', estimated_cost_eth);
+
+        if (balance < estimated_cost_gwei) {
+            console.error('Insufficient balance');
+            return;
+        } else { 
+            console.log('Well, your balance might be sufficient, good luck!');
+        }
+
+        const inbox = await deploymentTranscation.send({from: accountToUse,  gas: estimatedGas,
+                maxFeePerGas: web3.utils.toWei(gasPriceGwei.toString(), 'gwei'),
+                maxPriorityFeePerGas: web3.utils.toWei(MAX_PRIORITY_FEE_PER_GAS_GWEI.toString(), 'gwei') 
                 }).on('receipt', function(receipt) {
                     console.log('Contract deployed at address:', receipt.contractAddress);
                 })
                 .on('error', function(error) {
                     console.error('Error deploying contract:', error);
                 });
-        console.log(inbox);
-        console.log('ADDRESS');
-        console.log(inbox.options.address);
 
     } catch (error) {
         console.error(error); 
