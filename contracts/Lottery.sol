@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.28;
+pragma solidity ^0.8.21;
 
-contract Inbox {
+contract Lottery {
     address public manager;
     address[] public entries;
 

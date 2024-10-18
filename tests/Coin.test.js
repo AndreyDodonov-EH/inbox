@@ -12,7 +12,7 @@ const provider = ganache.provider(ganacheOptions);
 const web3 = new Web3(provider);
 
 let accounts;
-let Coin;
+let deployedContract;
 
 beforeEach(async () => {
     const contract = compile('Coin');
@@ -24,36 +24,36 @@ beforeEach(async () => {
 
     accounts = await web3.eth.getAccounts();
     console.log('Accounts length: ', accounts.length);
-    Coin = await deploymentTranscation.send({
+    deployedContract = await deploymentTranscation.send({
         from: accounts[0], gas: '1000000',
         maxFeePerGas: web3.utils.toWei('5', 'gwei'),
         maxPriorityFeePerGas: web3.utils.toWei('3.5', 'gwei')
     });
 
-    await Coin.methods.mint(accounts[0], 1000).send({ from: accounts[0] });
+    await deployedContract.methods.mint(accounts[0], 1000).send({ from: accounts[0] });
 });
 
 describe('coin', () => {
     it('can deploy', () => {
-        assert.ok(Coin.options.address);
+        assert.ok(deployedContract.options.address);
         console.log('METHODS START');
-        console.log(Coin.methods);
+        console.log(deployedContract.methods);
         console.log('METHODS END');
     });
     it('event works', () => {
-        Coin.events.Sent().on('data', async function (event) {
+        deployedContract.events.Sent().on('data', async function (event) {
             console.log("Coin transfer: " + event.returnValues.amount +
                 " coins were sent from " + event.returnValues.from +
                 " to " + event.returnValues.to + ".")
-            const senderBalance = await Coin.methods.balances(event.returnValues.from).call();
-            const receiverBalance = await Coin.methods.balances(event.returnValues.to).call();
+            const senderBalance = await deployedContract.methods.balances(event.returnValues.from).call();
+            const receiverBalance = await deployedContract.methods.balances(event.returnValues.to).call();
             console.log("Balances now:\n" +
                 "Sender: " + senderBalance +
                 "\nReceiver: " + receiverBalance);
         })
-        Coin.events.Sent().on('error', console.error);
+        deployedContract.events.Sent().on('error', console.error);
         // Trigger an event by making a transaction
-        Coin.methods.send(accounts[1], 10).send({ from: accounts[0] });
+        deployedContract.methods.send(accounts[1], 10).send({ from: accounts[0] });
         // coin.Sent().watch({}, '', function(error, result) {
         //     if (!error) {
         //         console.log("Coin transfer: " + result.args.amount +
