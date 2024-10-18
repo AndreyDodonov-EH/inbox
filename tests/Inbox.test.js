@@ -1,7 +1,7 @@
 const assert = require('assert'); // assertion library
 const ganache = require('ganache'); // local test network
 const {Web3} = require('web3');
-const contract = require('../compile');
+const compile = require('../compile');
 
 const ganacheOptions = {
     chain: {hardfork: 'shanghai'},
@@ -16,12 +16,13 @@ let accounts;
 let inbox;
 
 beforeEach(async () => {
-    accounts = await web3.eth.getAccounts();
+    const contract = compile('Inbox');
     const web3Contract = new web3.eth.Contract(contract.abi);
     // THIS IS NOT DEPLOYING THE CONTRACT, IT IS CREATING DEPLOYMENT TRANSACTION WHICH SHOULD BE SENT
     const deploymentTranscation = web3Contract
          .deploy({data: contract.evm.bytecode.object, arguments: [initialMessage]});
     
+    accounts = await web3.eth.getAccounts();
     inbox = await deploymentTranscation.send({from: accounts[0],  gas: '1000000',
         maxFeePerGas: web3.utils.toWei('5', 'gwei'),
         maxPriorityFeePerGas: web3.utils.toWei('3.5', 'gwei') 

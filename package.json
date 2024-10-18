@@ -4,7 +4,7 @@
   "description": "",
   "main": "compile.js",
   "directories": {
-    "test": "test"
+    "test": "tests"
   },
   "scripts": {
     "test": "mocha"
@@ -16,7 +16,10 @@
     "dotenv": "^16.4.5",
     "ganache": "7.9.2",
     "mocha": "10.7.3",
-    "solc": "^0.8.21",
+    "solc": "^0.8.28",
     "web3": "^4.13.0"
+  },
+  "devDependencies": {
+    "hardhat": "^2.22.12"
   }
 }
