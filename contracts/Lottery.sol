@@ -14,10 +14,14 @@ contract Lottery {
         entries.push(msg.sender);
     }
 
-    function  pickWiner() public restricted {
+    function  pickWinner() public restricted {
         uint index = barelyRandom() % entries.length;
         payable(entries[index]).transfer(address(this).balance);
         entries = new address[](0);
+    }
+
+    function getEntries() public view returns (address[] memory) {
+        return entries;
     }
 
     function barelyRandom() private view returns (uint) {
